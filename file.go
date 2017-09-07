@@ -147,9 +147,3 @@ func Close(fp *os.File) error {
 	}
 	return nil
 }
-
-// Checks whether the file exists.
-func Exists(path string) bool {
-	_, err := os.Stat(path)
-	return err == nil
-}

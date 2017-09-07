@@ -114,16 +114,3 @@ func TestClose(t *testing.T) {
 		t.Fatal("error is not a LockError")
 	}
 }
-
-func TestExists(t *testing.T) {
-	result := Exists(TestDir)
-	if !result {
-		t.Fatalf("result = %t, want %t for file %s", result, true, TestDir)
-	}
-
-	path := GetTestFilePath("notexist.txt")
-	result = Exists(path)
-	if result {
-		t.Fatalf("result = %t, want %t for file %s", result, false, path)
-	}
-}
