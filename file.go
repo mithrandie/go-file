@@ -26,9 +26,9 @@ func OpenToRead(path string) (*os.File, error) {
 	return Open(path, os.O_RDONLY, 0400, SHARED_LOCK)
 }
 
-// Open the file with locking. OpenToRead is the same as Open(path, os.O_WRONLY|O_TRUNC, 0600, EXCLUSIVE_LOCK)
+// Open the file with locking. OpenToRead is the same as Open(path, os.O_RDWR, 0600, EXCLUSIVE_LOCK)
 func OpenToUpdate(path string) (*os.File, error) {
-	return Open(path, os.O_WRONLY|os.O_TRUNC, 0600, EXCLUSIVE_LOCK)
+	return Open(path, os.O_RDWR, 0600, EXCLUSIVE_LOCK)
 }
 
 // Open the file with locking. Create is the same as Open(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600, EXCLUSIVE_LOCK)
@@ -41,9 +41,9 @@ func OpenToReadWithTimeout(path string) (*os.File, error) {
 	return OpenWithTimeout(path, os.O_RDONLY, 0400, SHARED_LOCK)
 }
 
-// Open the file with locking. OpenToUpdateWithTimeout is the same as OpenWithTimeout(path, os.O_WRONLY|O_TRUNC, 0600, EXCLUSIVE_LOCK)
+// Open the file with locking. OpenToUpdateWithTimeout is the same as OpenWithTimeout(path, os.O_RDWR, 0600, EXCLUSIVE_LOCK)
 func OpenToUpdateWithTimeout(path string) (*os.File, error) {
-	return OpenWithTimeout(path, os.O_WRONLY|os.O_TRUNC, 0600, EXCLUSIVE_LOCK)
+	return OpenWithTimeout(path, os.O_RDWR, 0600, EXCLUSIVE_LOCK)
 }
 
 // Open the file with file locking. If the file is already locked, waits until the file is released.
