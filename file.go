@@ -36,14 +36,14 @@ func Create(path string) (*os.File, error) {
 	return Open(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600, EXCLUSIVE_LOCK)
 }
 
-// Open the file with locking. TryOpenToRead is the same as TryOpen(path, os.O_RDONLY, 0400, SHARED_LOCK)
-func TryOpenToRead(path string) (*os.File, error) {
-	return TryOpen(path, os.O_RDONLY, 0400, SHARED_LOCK)
+// Open the file with locking. OpenToReadWithTimeout is the same as OpenWithTimeout(path, os.O_RDONLY, 0400, SHARED_LOCK)
+func OpenToReadWithTimeout(path string) (*os.File, error) {
+	return OpenWithTimeout(path, os.O_RDONLY, 0400, SHARED_LOCK)
 }
 
-// Open the file with locking. TryOpenToUpdate is the same as TryOpen(path, os.O_WRONLY|O_TRUNC, 0600, EXCLUSIVE_LOCK)
-func TryOpenToUpdate(path string) (*os.File, error) {
-	return TryOpen(path, os.O_WRONLY|os.O_TRUNC, 0600, EXCLUSIVE_LOCK)
+// Open the file with locking. OpenToUpdateWithTimeout is the same as OpenWithTimeout(path, os.O_WRONLY|O_TRUNC, 0600, EXCLUSIVE_LOCK)
+func OpenToUpdateWithTimeout(path string) (*os.File, error) {
+	return OpenWithTimeout(path, os.O_WRONLY|os.O_TRUNC, 0600, EXCLUSIVE_LOCK)
 }
 
 // Open the file with file locking. If the file is already locked, waits until the file is released.
@@ -62,32 +62,14 @@ func Open(path string, flag int, perm os.FileMode, lockType LockType) (*os.File,
 }
 
 // Open the file with file locking. If the file is already locked, waits for up to WaitTimeout seconds.
-func TryOpen(path string, flag int, perm os.FileMode, lockType LockType) (*os.File, error) {
-	start := time.Now()
-
+func OpenWithTimeout(path string, flag int, perm os.FileMode, lockType LockType) (*os.File, error) {
 	fp, err := os.OpenFile(path, flag, perm)
 	if err != nil {
 		return nil, NewIOError(err.Error())
 	}
 
-	err = TryLock(fp, lockType)
-	if err == nil {
-		return fp, nil
-	}
+	err = LockWithTimeout(fp, lockType)
 
-	if 0 < WaitTimeout {
-		for {
-			if time.Since(start).Seconds() > WaitTimeout {
-				err = NewTimeoutError(path)
-				break
-			}
-			time.Sleep(RetryInterval)
-
-			if err = TryLock(fp, lockType); err == nil {
-				break
-			}
-		}
-	}
 	if err != nil {
 		fp.Close()
 		return nil, err
@@ -126,6 +108,32 @@ func TryLock(fp *os.File, lockType LockType) error {
 		return NewLockError(err.Error())
 	}
 	return nil
+}
+
+// Places a lock on the file. If the file is already locked, waits for up to WaitTimeout seconds.
+func LockWithTimeout(fp *os.File, lockType LockType) error {
+	start := time.Now()
+
+	err := TryLock(fp, lockType)
+	if err == nil {
+		return nil
+	}
+
+	if 0 < WaitTimeout {
+		for {
+			if time.Since(start).Seconds() > WaitTimeout {
+				err = NewTimeoutError(fp.Name())
+				break
+			}
+			time.Sleep(RetryInterval)
+
+			if err = TryLock(fp, lockType); err == nil {
+				break
+			}
+		}
+	}
+
+	return err
 }
 
 // Unlocks and closes the file

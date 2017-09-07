@@ -26,7 +26,7 @@ func TestOpen(t *testing.T) {
 		t.Fatal("error is not a IOError")
 	}
 
-	_, err = TryOpenToRead(notexistpath)
+	_, err = OpenToReadWithTimeout(notexistpath)
 	if err == nil {
 		t.Fatal("no error, want IOError")
 	}
@@ -34,7 +34,7 @@ func TestOpen(t *testing.T) {
 		t.Fatal("error is not a IOError")
 	}
 
-	_, err = TryOpenToUpdate(notexistpath)
+	_, err = OpenToUpdateWithTimeout(notexistpath)
 	if err == nil {
 		t.Fatal("no error, want IOError")
 	}
@@ -66,13 +66,13 @@ func TestOpen(t *testing.T) {
 			t.Fatalf("unexpected error: %s", err)
 		}
 
-		shfp2, err := TryOpenToRead(shpath)
+		shfp2, err := OpenToReadWithTimeout(shpath)
 		defer Close(shfp2)
 		if err != nil {
 			t.Fatalf("unexpected error: %s", err)
 		}
 
-		exfp2, err := TryOpenToUpdate(expath)
+		exfp2, err := OpenToUpdateWithTimeout(expath)
 		defer Close(exfp2)
 		if err == nil {
 			t.Fatal("no error, want error for duplicate exclusive lock")
