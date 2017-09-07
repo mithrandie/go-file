@@ -20,28 +20,31 @@ const (
 	LOCKFILE_FAIL_IMMEDIATELY = 0x00000001
 )
 
-var handle uintptr
-
+// Places a shared lock on the file. If the file is already locked, waits until the file is released.
 func LockSH(fp *os.File) error {
 	r1, errNo := lock(fp, 0x0)
 	return isError(r1, errNo)
 }
 
+// Places an exclusive lock on the file. If the file is already locked, waits until the file is released.
 func LockEX(fp *os.File) error {
 	r1, errNo := lock(fp, LOCKFILE_EXCLUSIVE_LOCK)
 	return isError(r1, errNo)
 }
 
+// Places a shared lock on the file. If the file is already locked, returns an error immediately.
 func TryLockSH(fp *os.File) error {
 	r1, errNo := lock(fp, LOCKFILE_FAIL_IMMEDIATELY)
 	return isError(r1, errNo)
 }
 
+// Places an exclusive lock on the file. If the file is already locked, returns an error immediately.
 func TryLockEX(fp *os.File) error {
 	r1, errNo := lock(fp, LOCKFILE_EXCLUSIVE_LOCK|LOCKFILE_FAIL_IMMEDIATELY)
 	return isError(r1, errNo)
 }
 
+// Unlock the file.
 func Unlock(fp *os.File) error {
 	r1, _, errNo := syscall.Syscall6(
 		uintptr(procUnlockFileEx.Addr()),
