@@ -8,7 +8,7 @@ import (
 // Limit of the waiting time in seconds to wait for files to be released.
 var WaitTimeout float64 = 30.0
 
-// Interval to retry locking files.
+// Interval to retry file locking.
 var RetryInterval time.Duration = 50 * time.Millisecond
 
 // Types of Locks
