@@ -34,9 +34,9 @@ type TimeoutError struct {
 	message string
 }
 
-func NewTimeoutError(filepath string) error {
+func NewTimeoutError(path string) error {
 	return &TimeoutError{
-		message: fmt.Sprintf("file %s: lock wait timeout period exceeded", filepath),
+		message: fmt.Sprintf("file %s: lock waiting time exceeded", path),
 	}
 }
 

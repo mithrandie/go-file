@@ -10,7 +10,7 @@ func TestOpen(t *testing.T) {
 	var err error
 
 	notexistpath := GetTestFilePath("notexist.txt")
-	_, err = OpenForRead(notexistpath)
+	_, err = OpenToRead(notexistpath)
 	if err == nil {
 		t.Fatal("no error, want IOError")
 	}
@@ -18,7 +18,7 @@ func TestOpen(t *testing.T) {
 		t.Fatal("error is not a IOError")
 	}
 
-	_, err = OpenForUpdate(notexistpath)
+	_, err = OpenToUpdate(notexistpath)
 	if err == nil {
 		t.Fatal("no error, want IOError")
 	}
@@ -26,7 +26,7 @@ func TestOpen(t *testing.T) {
 		t.Fatal("error is not a IOError")
 	}
 
-	_, err = OpenNBForRead(notexistpath)
+	_, err = TryOpenToRead(notexistpath)
 	if err == nil {
 		t.Fatal("no error, want IOError")
 	}
@@ -34,7 +34,7 @@ func TestOpen(t *testing.T) {
 		t.Fatal("error is not a IOError")
 	}
 
-	_, err = OpenNBForUpdate(notexistpath)
+	_, err = TryOpenToUpdate(notexistpath)
 	if err == nil {
 		t.Fatal("no error, want IOError")
 	}
@@ -44,7 +44,7 @@ func TestOpen(t *testing.T) {
 
 	switch runtime.GOOS {
 	case "darwin", "dragonfly", "freebsd", "linux", "netbsd", "openbsd", "windows":
-		Timeout = 0.1
+		WaitTimeout = 0.1
 
 		shpath := GetTestFilePath("lock_sh.txt")
 		expath := GetTestFilePath("lock_ex.txt")
@@ -54,25 +54,25 @@ func TestOpen(t *testing.T) {
 		exfp, _ := os.OpenFile(expath, os.O_CREATE, 0600)
 		exfp.Close()
 
-		shfp1, err := OpenForRead(shpath)
+		shfp1, err := OpenToRead(shpath)
 		defer Close(shfp1)
 		if err != nil {
 			t.Fatalf("unexpected error: %s", err)
 		}
 
-		exfp1, err := OpenForUpdate(expath)
+		exfp1, err := OpenToUpdate(expath)
 		defer Close(exfp1)
 		if err != nil {
 			t.Fatalf("unexpected error: %s", err)
 		}
 
-		shfp2, err := OpenNBForRead(shpath)
+		shfp2, err := TryOpenToRead(shpath)
 		defer Close(shfp2)
 		if err != nil {
 			t.Fatalf("unexpected error: %s", err)
 		}
 
-		exfp2, err := OpenNBForUpdate(expath)
+		exfp2, err := TryOpenToUpdate(expath)
 		defer Close(exfp2)
 		if err == nil {
 			t.Fatal("no error, want error for duplicate exclusive lock")
@@ -100,7 +100,7 @@ func TestOpen(t *testing.T) {
 
 func TestClose(t *testing.T) {
 	path := GetTestFilePath("closetest.txt")
-	fp, _ := OpenForCreate(path)
+	fp, _ := Create(path)
 	err := fp.Close()
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
@@ -118,12 +118,12 @@ func TestClose(t *testing.T) {
 func TestExists(t *testing.T) {
 	result := Exists(TestDir)
 	if !result {
-		t.Fatal("result = %t, want %t for file %s", result, true, TestDir)
+		t.Fatalf("result = %t, want %t for file %s", result, true, TestDir)
 	}
 
 	path := GetTestFilePath("notexist.txt")
 	result = Exists(path)
 	if result {
-		t.Fatal("result = %t, want %t for file %s", result, false, path)
+		t.Fatalf("result = %t, want %t for file %s", result, false, path)
 	}
 }
