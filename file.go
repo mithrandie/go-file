@@ -65,7 +65,7 @@ func OpenNB(path string, flag int, perm os.FileMode, lockType LockType) (*os.Fil
 	if 0 < Timeout {
 		for {
 			if time.Since(start).Seconds() > Timeout {
-				err = NewTimeoutError("")
+				err = NewTimeoutError(path)
 				break
 			}
 			time.Sleep(RetryInterval)
@@ -122,4 +122,9 @@ func Close(fp *os.File) error {
 		return NewLockError(err.Error())
 	}
 	return nil
+}
+
+func Exists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }
