@@ -27,3 +27,29 @@ Mandatory Lock
 ### android nacl plan9 solaris zos
 
 Not Supported
+
+## Example
+
+```go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	 
+	"github.com/mithrandie/go-file"
+)
+
+func main() {
+	fp, err := file.OpenToRead("/path/to/file")
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close(fp)
+
+	scanner := bufio.NewScanner(fp)
+	for scanner.Scan() {
+		fmt.Println(scanner.Text())
+	}
+}
+```
