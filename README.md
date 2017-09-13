@@ -16,7 +16,7 @@ go get github.com/mithrandie/go-file
 
 Currently file locking on the following systems are supported.
 
-### darwin dragonfly freebsd linux netbsd openbsd
+### darwin dragonfly freebsd linux netbsd openbsd solaris
 
 Advisory Lock
 
@@ -24,7 +24,7 @@ Advisory Lock
 
 Mandatory Lock
 
-### android nacl plan9 solaris zos
+### android nacl plan9 zos
 
 Not Supported
 

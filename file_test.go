@@ -95,6 +95,8 @@ func TestOpen(t *testing.T) {
 		if _, ok := err.(*LockError); !ok {
 			t.Fatal("error is not a LockError")
 		}
+	case "solaris":
+		// maybe write later
 	}
 }
 
@@ -106,11 +108,14 @@ func TestClose(t *testing.T) {
 		t.Fatalf("unexpected error: %s", err)
 	}
 
-	err = Close(fp)
-	if err == nil {
-		t.Fatal("no error, want error for invalid file descriptor")
-	}
-	if _, ok := err.(*LockError); !ok {
-		t.Fatal("error is not a LockError")
+	switch runtime.GOOS {
+	case "darwin", "dragonfly", "freebsd", "linux", "netbsd", "openbsd", "solaris", "windows":
+		err = Close(fp)
+		if err == nil {
+			t.Fatal("no error, want error for invalid file descriptor")
+		}
+		if _, ok := err.(*LockError); !ok {
+			t.Fatal("error is not a LockError")
+		}
 	}
 }

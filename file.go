@@ -112,25 +112,21 @@ func TryLock(fp *os.File, lockType LockType) error {
 
 // Places a lock on the file. If the file is already locked, waits for up to WaitTimeout seconds.
 func LockWithTimeout(fp *os.File, lockType LockType) error {
-	start := time.Now()
+	var err error
+	var start time.Time
 
-	err := TryLock(fp, lockType)
-	if err == nil {
-		return nil
-	}
-
-	if 0 < WaitTimeout {
-		for {
-			if time.Since(start).Seconds() > WaitTimeout {
-				err = NewTimeoutError(fp.Name())
-				break
-			}
-			time.Sleep(RetryInterval)
-
-			if err = TryLock(fp, lockType); err == nil {
-				break
-			}
+	for {
+		if start.IsZero() {
+			start = time.Now()
+		} else if time.Since(start).Seconds() > WaitTimeout {
+			err = NewTimeoutError(fp.Name())
+			break
 		}
+
+		if err = TryLock(fp, lockType); err == nil {
+			break
+		}
+		time.Sleep(RetryInterval)
 	}
 
 	return err
