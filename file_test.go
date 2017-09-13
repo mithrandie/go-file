@@ -43,7 +43,7 @@ func TestOpen(t *testing.T) {
 	}
 
 	switch runtime.GOOS {
-	case "darwin", "dragonfly", "freebsd", "linux", "netbsd", "openbsd", "windows":
+	case "darwin", "dragonfly", "freebsd", "linux", "netbsd", "openbsd", "solaris", "windows":
 		WaitTimeout = 0.1
 
 		shpath := GetTestFilePath("lock_sh.txt")
@@ -107,7 +107,7 @@ func TestClose(t *testing.T) {
 	}
 
 	switch runtime.GOOS {
-	case "darwin", "dragonfly", "freebsd", "linux", "netbsd", "openbsd", "windows":
+	case "darwin", "dragonfly", "freebsd", "linux", "netbsd", "openbsd", "solaris", "windows":
 		err = Close(fp)
 		if err == nil {
 			t.Fatal("no error, want error for invalid file descriptor")
