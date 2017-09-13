@@ -43,7 +43,7 @@ func TestOpen(t *testing.T) {
 	}
 
 	switch runtime.GOOS {
-	case "darwin", "dragonfly", "freebsd", "linux", "netbsd", "openbsd", "solaris", "windows":
+	case "darwin", "dragonfly", "freebsd", "linux", "netbsd", "openbsd", "windows":
 		WaitTimeout = 0.1
 
 		shpath := GetTestFilePath("lock_sh.txt")
@@ -95,6 +95,8 @@ func TestOpen(t *testing.T) {
 		if _, ok := err.(*LockError); !ok {
 			t.Fatal("error is not a LockError")
 		}
+	case "solaris":
+		// maybe write later
 	}
 }
 

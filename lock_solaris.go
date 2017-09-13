@@ -46,7 +46,7 @@ func TryLockSH(fp *os.File) error {
 	lock.Start = 0
 	lock.Len = 0
 	lock.Whence = 0
-	lock.Pid = 0
+	lock.Pid = int32(os.Getpid())
 	lock.Type = syscall.F_RDLCK
 	return syscall.FcntlFlock(uintptr(fp.Fd()), syscall.F_SETLK, &lock)
 }
@@ -57,7 +57,7 @@ func TryLockEX(fp *os.File) error {
 	lock.Start = 0
 	lock.Len = 0
 	lock.Whence = 0
-	lock.Pid = 0
+	lock.Pid = int32(os.Getpid())
 	lock.Type = syscall.F_WRLCK
 	return syscall.FcntlFlock(uintptr(fp.Fd()), syscall.F_SETLK, &lock)
 }
