@@ -8,6 +8,9 @@ import (
 	"time"
 )
 
+// Interval to retry file locking for Solaris.
+var RetryInterval = 50 * time.Millisecond
+
 // Places a shared lock on the file. If the file is already locked, waits until the file is released.
 func LockSH(fp *os.File) error {
 	for {
