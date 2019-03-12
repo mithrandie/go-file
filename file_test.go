@@ -10,7 +10,7 @@ import (
 
 func TestOpen(t *testing.T) {
 	var err error
-	ctx, _ := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	retryDelay := 50 * time.Millisecond
 
 	notexistpath := GetTestFilePath("notexist.txt")
@@ -107,6 +107,16 @@ func TestOpen(t *testing.T) {
 		}
 		if _, ok := err.(*LockError); !ok {
 			t.Fatal("error is not a LockError")
+		}
+
+		cancel()
+		exfp5, err := OpenToUpdateContext(ctx, retryDelay, expath)
+		defer func() { _ = Close(exfp5) }()
+		if err == nil {
+			t.Fatal("no error, want error for duplicate exclusive lock")
+		}
+		if _, ok := err.(*ContextIsDone); !ok {
+			t.Fatal("error is not a ContextIsDone")
 		}
 	case "solaris":
 		// maybe write later
