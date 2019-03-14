@@ -1,1 +1,1 @@
-module github.com/mithrandie/go-file
+module github.com/mithrandie/go-file/v2
