@@ -1,144 +1,149 @@
 package file
 
 import (
+	"context"
 	"os"
 	"time"
 )
 
-// Limit of the waiting time in seconds to wait for files to be released.
-var WaitTimeout float64 = 30.0
-
-// Interval to retry file locking.
-var RetryInterval time.Duration = 50 * time.Millisecond
-
-// Types of Locks
-type LockType int
-
-const (
-	// Shared Lock
-	SHARED_LOCK LockType = iota
-	// Exclusive Lock
-	EXCLUSIVE_LOCK
-)
-
-// Opens the file with locking. OpenToRead is the same as Open(path, os.O_RDONLY, 0400, SHARED_LOCK)
+// Opens the file with shared lock. This function is the same as Open(path, os.O_RDONLY, RLock)
 func OpenToRead(path string) (*os.File, error) {
-	return Open(path, os.O_RDONLY, 0400, SHARED_LOCK)
+	return Open(path, os.O_RDONLY, RLock)
 }
 
-// Opens the file with locking. OpenToRead is the same as Open(path, os.O_RDWR, 0600, EXCLUSIVE_LOCK)
+// Tries to lock and opens the file with shared lock. This function is the same as Open(path, os.O_RDONLY, TryRLock)
+func TryOpenToRead(path string) (*os.File, error) {
+	return Open(path, os.O_RDONLY, TryRLock)
+}
+
+// Opens the file with exclusive lock. This function is the same as Open(path, os.O_RDWR, Lock)
 func OpenToUpdate(path string) (*os.File, error) {
-	return Open(path, os.O_RDWR, 0600, EXCLUSIVE_LOCK)
+	return Open(path, os.O_RDWR, Lock)
 }
 
-// Opens the file with locking. Create is the same as Open(path, os.O_CREATE|os.O_EXCL|os.O_RDWR, 0600, EXCLUSIVE_LOCK)
+// Tries to lock and opens the file with exclusive lock. This function is the same as Open(path, os.O_RDWR, TryLock)
+func TryOpenToUpdate(path string) (*os.File, error) {
+	return Open(path, os.O_RDWR, TryLock)
+}
+
+// Opens the file with exclusive locking. This function is the same as Open(path, os.O_CREATE|os.O_EXCL|os.O_RDWR, TryLock)
 func Create(path string) (*os.File, error) {
-	return Open(path, os.O_CREATE|os.O_EXCL|os.O_RDWR, 0600, EXCLUSIVE_LOCK)
+	return Open(path, os.O_CREATE|os.O_EXCL|os.O_RDWR, TryLock)
 }
 
-// Opens the file with locking. OpenToReadWithTimeout is the same as OpenWithTimeout(path, os.O_RDONLY, 0400, SHARED_LOCK)
-func OpenToReadWithTimeout(path string) (*os.File, error) {
-	return OpenWithTimeout(path, os.O_RDONLY, 0400, SHARED_LOCK)
+// Opens the file with shared lock. If the file is already locked, tries to lock repeatedly until the conditions is met. This function is the same as OpenContext(ctx, retryDelay, path, RLockContext)
+func OpenToReadContext(ctx context.Context, retryDelay time.Duration, path string) (*os.File, error) {
+	return OpenContext(ctx, retryDelay, path, os.O_RDONLY, RLockContext)
 }
 
-// Opens the file with locking. OpenToUpdateWithTimeout is the same as OpenWithTimeout(path, os.O_RDWR, 0600, EXCLUSIVE_LOCK)
-func OpenToUpdateWithTimeout(path string) (*os.File, error) {
-	return OpenWithTimeout(path, os.O_RDWR, 0600, EXCLUSIVE_LOCK)
+// Opens the file with exclusive lock. If the file is already locked, tries to lock repeatedly until the conditions is met. This function is the same as OpenContext(ctx, retryDelay, path, LockContext)
+func OpenToUpdateContext(ctx context.Context, retryDelay time.Duration, path string) (*os.File, error) {
+	return OpenContext(ctx, retryDelay, path, os.O_RDWR, LockContext)
 }
 
-// Opens the file with file locking. If the file is already locked, waits until the file is released.
-func Open(path string, flag int, perm os.FileMode, lockType LockType) (*os.File, error) {
+// Opens the file with passed locking function.
+func Open(path string, flag int, fn func(*os.File) error) (*os.File, error) {
+	fp, err := openFile(path, flag)
+	if err != nil {
+		return nil, err
+	}
+
+	err = lock(fp, fn)
+
+	if err != nil {
+		_ = fp.Close()
+	}
+	return fp, err
+}
+
+// Opens the file with passed locking function. If failed, try to lock repeatedly until the conditions is met.
+func OpenContext(ctx context.Context, retryDelay time.Duration, path string, flag int, fn func(context.Context, time.Duration, *os.File) error) (*os.File, error) {
+	fp, err := openFile(path, flag)
+	if err != nil {
+		return nil, err
+	}
+
+	err = fn(ctx, retryDelay, fp)
+
+	if err != nil {
+		_ = fp.Close()
+	}
+	return fp, err
+}
+
+func openFile(path string, flag int) (*os.File, error) {
+	var perm os.FileMode = 0600
+	if flag == os.O_RDONLY {
+		perm = 0400
+	}
 	fp, err := os.OpenFile(path, flag, perm)
 	if err != nil {
 		return nil, NewIOError(err.Error())
 	}
-
-	err = Lock(fp, lockType)
-	if err != nil {
-		fp.Close()
-		return nil, err
-	}
 	return fp, nil
 }
 
-// Opens the file with file locking. If the file is already locked, waits for up to WaitTimeout seconds.
-func OpenWithTimeout(path string, flag int, perm os.FileMode, lockType LockType) (*os.File, error) {
-	fp, err := os.OpenFile(path, flag, perm)
-	if err != nil {
-		return nil, NewIOError(err.Error())
-	}
-
-	err = LockWithTimeout(fp, lockType)
-
-	if err != nil {
-		fp.Close()
-		return nil, err
-	}
-
-	return fp, nil
+// Places the exclusive lock on the file. If the file is already locked, waits until the file is released.
+func Lock(fp *os.File) error {
+	return lock(fp, LockEX)
 }
 
-// Places a lock on the file. If the file is already locked, waits until the file is released.
-func Lock(fp *os.File, lockType LockType) error {
-	var err error
-	switch lockType {
-	case EXCLUSIVE_LOCK:
-		err = LockEX(fp)
-	default:
-		err = LockSH(fp)
-	}
+// Places the shared lock on the file. If the file is already locked, waits until the file is released.
+func RLock(fp *os.File) error {
+	return lock(fp, LockSH)
+}
 
-	if err != nil {
+// Places the exclusive lock on the file. If the file is already locked, returns an error immediately.
+func TryLock(fp *os.File) error {
+	return lock(fp, TryLockEX)
+}
+
+// Places the shared lock on the file. If the file is already locked, returns an error immediately.
+func TryRLock(fp *os.File) error {
+	return lock(fp, TryLockSH)
+}
+
+func lock(fp *os.File, fn func(*os.File) error) error {
+	if err := fn(fp); err != nil {
 		return NewLockError(err.Error())
 	}
 	return nil
 }
 
-// Places a lock on the file. If the file is already locked, returns an error immediately.
-func TryLock(fp *os.File, lockType LockType) error {
-	var err error
-	switch lockType {
-	case EXCLUSIVE_LOCK:
-		err = TryLockEX(fp)
-	default:
-		err = TryLockSH(fp)
-	}
-
-	if err != nil {
-		return NewLockError(err.Error())
-	}
-	return nil
+// Places the exclusive lock on the file. If the file is already locked, tries to lock repeatedly until the conditions is met.
+func LockContext(ctx context.Context, retryDelay time.Duration, fp *os.File) error {
+	return lockContext(ctx, retryDelay, fp, TryLock)
 }
 
-// Places a lock on the file. If the file is already locked, waits for up to WaitTimeout seconds.
-func LockWithTimeout(fp *os.File, lockType LockType) error {
-	var err error
-	var start time.Time
+// Places the shared lock on the file. If the file is already locked, tries to lock repeatedly until the conditions is met.
+func RLockContext(ctx context.Context, retryDelay time.Duration, fp *os.File) error {
+	return lockContext(ctx, retryDelay, fp, TryRLock)
+}
+
+func lockContext(ctx context.Context, retryDelay time.Duration, fp *os.File, fn func(*os.File) error) error {
+	if ctx.Err() != nil {
+		return NewContextIsDone(ctx.Err().Error())
+	}
 
 	for {
-		if start.IsZero() {
-			start = time.Now()
-		} else if time.Since(start).Seconds() > WaitTimeout {
-			err = NewTimeoutError(fp.Name())
-			break
+		if err := fn(fp); err == nil {
+			return nil
 		}
 
-		if err = TryLock(fp, lockType); err == nil {
-			break
+		select {
+		case <-ctx.Done():
+			return NewTimeoutError(fp.Name())
+		case <-time.After(retryDelay):
+			// try again
 		}
-		time.Sleep(RetryInterval)
 	}
-
-	return err
 }
 
 // Unlocks and closes the file
-func Close(fp *os.File) error {
-	defer func() {
-		fp.Close()
-	}()
+func Close(fp *os.File) (err error) {
+	defer func() { _ = fp.Close() }()
 
-	if err := Unlock(fp); err != nil {
+	if err = Unlock(fp); err != nil {
 		return NewLockError(err.Error())
 	}
 	return nil

@@ -22,26 +22,26 @@ const (
 
 // Places a shared lock on the file. If the file is already locked, waits until the file is released.
 func LockSH(fp *os.File) error {
-	r1, errNo := lock(fp, 0x0)
-	return isError(r1, errNo)
+	r1, errNo := wlock(fp, 0x0)
+	return isWError(r1, errNo)
 }
 
 // Places an exclusive lock on the file. If the file is already locked, waits until the file is released.
 func LockEX(fp *os.File) error {
-	r1, errNo := lock(fp, LOCKFILE_EXCLUSIVE_LOCK)
-	return isError(r1, errNo)
+	r1, errNo := wlock(fp, LOCKFILE_EXCLUSIVE_LOCK)
+	return isWError(r1, errNo)
 }
 
 // Places a shared lock on the file. If the file is already locked, returns an error immediately.
 func TryLockSH(fp *os.File) error {
-	r1, errNo := lock(fp, LOCKFILE_FAIL_IMMEDIATELY)
-	return isError(r1, errNo)
+	r1, errNo := wlock(fp, LOCKFILE_FAIL_IMMEDIATELY)
+	return isWError(r1, errNo)
 }
 
 // Places an exclusive lock on the file. If the file is already locked, returns an error immediately.
 func TryLockEX(fp *os.File) error {
-	r1, errNo := lock(fp, LOCKFILE_EXCLUSIVE_LOCK|LOCKFILE_FAIL_IMMEDIATELY)
-	return isError(r1, errNo)
+	r1, errNo := wlock(fp, LOCKFILE_EXCLUSIVE_LOCK|LOCKFILE_FAIL_IMMEDIATELY)
+	return isWError(r1, errNo)
 }
 
 // Unlock the file.
@@ -56,10 +56,10 @@ func Unlock(fp *os.File) error {
 		uintptr(unsafe.Pointer(&syscall.Overlapped{})),
 		0,
 	)
-	return isError(r1, errNo)
+	return isWError(r1, errNo)
 }
 
-func lock(fp *os.File, flags uintptr) (uintptr, syscall.Errno) {
+func wlock(fp *os.File, flags uintptr) (uintptr, syscall.Errno) {
 	r1, _, errNo := syscall.Syscall6(
 		uintptr(procLockFileEx.Addr()),
 		6,
@@ -73,7 +73,7 @@ func lock(fp *os.File, flags uintptr) (uintptr, syscall.Errno) {
 	return r1, errNo
 }
 
-func isError(r1 uintptr, errNo syscall.Errno) error {
+func isWError(r1 uintptr, errNo syscall.Errno) error {
 	if r1 != 1 {
 		if errNo != 0 {
 			return errors.New(errNo.Error())
