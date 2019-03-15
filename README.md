@@ -8,7 +8,7 @@ Package file is a Go library to open files with file locking depending on the sy
 
 ## Install
 
-```sql
+```
 go get github.com/mithrandie/go-file
 ```
 
@@ -35,21 +35,47 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
+	"time"
 	 
-	"github.com/mithrandie/go-file"
+	"github.com/mithrandie/go-file/v2"
 )
 
 func main() {
-	fp, err := file.OpenToRead("/path/to/file")
+	// Try to lock and open the file with shared lock
+	fp, err := file.TryOpenToRead("/path/to/file")
 	if err != nil {
 		panic(err)
 	}
-	defer file.Close(fp)
+	defer func() {
+		if e := file.Close(fp); e != nil {
+			println(e.Error())
+		}
+	}()
 
-	scanner := bufio.NewScanner(fp)
-	for scanner.Scan() {
-		fmt.Println(scanner.Text())
+	s := bufio.NewScanner(fp)
+	for s.Scan() {
+		fmt.Println(s.Text())
+	}
+
+	// Open the file with shared lock.
+	// If the file is already locked, tries to lock repeatedly until the conditions is met.
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	cfp, err := file.OpenToReadContext(ctx, 50*time.Millisecond, "/path/to/file2")
+	if err != nil {
+		panic(err)
+	}
+	defer func() {
+		cancel()
+		if e := file.Close(cfp); e != nil {
+			println(e.Error())
+		}
+	}()
+
+	cs := bufio.NewScanner(cfp)
+	for cs.Scan() {
+		fmt.Println(cs.Text())
 	}
 }
 ```
