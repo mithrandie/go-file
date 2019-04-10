@@ -1,6 +1,8 @@
 package file
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type IOError struct {
 	message string
@@ -44,16 +46,30 @@ func (e TimeoutError) Error() string {
 	return e.message
 }
 
-type ContextIsDone struct {
+type ContextCanceled struct {
 	message string
 }
 
-func NewContextIsDone(message string) error {
-	return &ContextIsDone{
+func NewContextCanceled(message string) error {
+	return &ContextCanceled{
 		message: message,
 	}
 }
 
-func (e ContextIsDone) Error() string {
+func (e ContextCanceled) Error() string {
+	return e.message
+}
+
+type ContextDone struct {
+	message string
+}
+
+func NewContextDone(message string) error {
+	return &ContextDone{
+		message: message,
+	}
+}
+
+func (e ContextDone) Error() string {
 	return e.message
 }
