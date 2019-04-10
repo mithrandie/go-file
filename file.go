@@ -122,7 +122,10 @@ func RLockContext(ctx context.Context, retryDelay time.Duration, fp *os.File) er
 
 func lockContext(ctx context.Context, retryDelay time.Duration, fp *os.File, fn func(*os.File) error) error {
 	if ctx.Err() != nil {
-		return NewContextIsDone(ctx.Err().Error())
+		if ctx.Err() == context.Canceled {
+			return NewContextCanceled(ctx.Err().Error())
+		}
+		return NewContextDone(ctx.Err().Error())
 	}
 
 	for {
@@ -132,6 +135,9 @@ func lockContext(ctx context.Context, retryDelay time.Duration, fp *os.File, fn 
 
 		select {
 		case <-ctx.Done():
+			if ctx.Err() == context.Canceled {
+				return NewContextCanceled(ctx.Err().Error())
+			}
 			return NewTimeoutError(fp.Name())
 		case <-time.After(retryDelay):
 			// try again

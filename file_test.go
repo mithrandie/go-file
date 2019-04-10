@@ -118,8 +118,8 @@ func TestOpen(t *testing.T) {
 	if err == nil {
 		t.Fatal("no error, want error for duplicate exclusive lock")
 	}
-	if _, ok := err.(*ContextIsDone); !ok {
-		t.Fatal("error is not a ContextIsDone")
+	if _, ok := err.(*ContextDone); !ok {
+		t.Fatal("error is not a ContextDone")
 	}
 }
 
