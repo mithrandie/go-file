@@ -1,4 +1,4 @@
-// +build solaris
+//go:build solaris
 
 package file
 
@@ -8,10 +8,10 @@ import (
 	"time"
 )
 
-// Interval to retry file locking for Solaris.
+// RetryInterval is the interval between retries of a file locking for Solaris.
 var RetryInterval = 50 * time.Millisecond
 
-// Places a shared lock on the file. If the file is already locked, waits until the file is released.
+// LockSH places a shared lock on the file. If the file is already locked, waits until the file is released.
 func LockSH(fp *os.File) error {
 	for {
 		err := TryLockSH(fp)
@@ -27,7 +27,7 @@ func LockSH(fp *os.File) error {
 	return nil
 }
 
-// Places an exclusive lock on the file. If the file is already locked, waits until the file is released.
+// LockEX places an exclusive lock on the file. If the file is already locked, waits until the file is released.
 func LockEX(fp *os.File) error {
 	for {
 		err := TryLockEX(fp)
@@ -43,7 +43,7 @@ func LockEX(fp *os.File) error {
 	return nil
 }
 
-// Places a shared lock on the file. If the file is already locked, returns an error immediately.
+// TryLockSH places a shared lock on the file. If the file is already locked, returns an error immediately.
 func TryLockSH(fp *os.File) error {
 	var lock syscall.Flock_t
 	lock.Start = 0
@@ -54,7 +54,7 @@ func TryLockSH(fp *os.File) error {
 	return syscall.FcntlFlock(uintptr(fp.Fd()), syscall.F_SETLK, &lock)
 }
 
-// Places an exclusive lock on the file. If the file is already locked, returns an error immediately.
+// TryLockEX places an exclusive lock on the file. If the file is already locked, returns an error immediately.
 func TryLockEX(fp *os.File) error {
 	var lock syscall.Flock_t
 	lock.Start = 0

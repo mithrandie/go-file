@@ -1,4 +1,4 @@
-// +build !darwin,!dragonfly,!freebsd,!linux,!netbsd,!openbsd,!solaris,!windows
+//go:build !darwin && !dragonfly && !freebsd && !linux && !netbsd && !openbsd && !solaris && !windows
 
 package file
 
@@ -6,27 +6,27 @@ import (
 	"os"
 )
 
-// Do nothing
-func LockSH(fp *os.File) error {
+// LockSH does nothing
+func LockSH(_ *os.File) error {
 	return nil
 }
 
-// Do nothing
-func LockEX(fp *os.File) error {
+// LockEX does nothing
+func LockEX(_ *os.File) error {
 	return nil
 }
 
-// Do nothing
-func TryLockSH(fp *os.File) error {
+// TryLockSH does nothing
+func TryLockSH(_ *os.File) error {
 	return nil
 }
 
-// Do nothing
-func TryLockEX(fp *os.File) error {
+// TryLockEX does nothing
+func TryLockEX(_ *os.File) error {
 	return nil
 }
 
-// Do nothing
-func Unlock(fp *os.File) error {
+// Unlock does nothing
+func Unlock(_ *os.File) error {
 	return nil
 }
