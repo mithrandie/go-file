@@ -2,7 +2,7 @@
 
 Package file is a Go library to open files with file locking depending on the system.
 
-[![Build Status](https://travis-ci.org/mithrandie/go-file.svg?branch=master)](https://travis-ci.org/mithrandie/go-file)
+[![Testing](https://github.com/mithrandie/go-file/actions/workflows/testing.yml/badge.svg)](https://github.com/mithrandie/go-file/actions/workflows/testing.yml)
 [![GoDoc](https://godoc.org/github.com/mithrandie/go-file?status.svg)](http://godoc.org/github.com/mithrandie/go-file)
 [![License: MIT](https://img.shields.io/badge/License-MIT-lightgrey.svg)](https://opensource.org/licenses/MIT)
 
